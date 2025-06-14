@@ -35,7 +35,7 @@ pipeline {
             // Build the project
             steps {
                 script {
-                    if (evn.changedServices.isEmpty()) {
+                    if (env.changedServices.isEmpty()) {
                         echo 'Building all services...'
                         sh 'mvn clean package -DskipTests'
                     } else {
@@ -46,21 +46,17 @@ pipeline {
                         services.each { service ->
                             builds[service] = {
                                 echo "Building service: ${service}"
-                                sh "cd ${service} && mvn clean package -DskipTests"
+                                sh "cd ${service} && mvn -B -T1C clean package -DskipTests"
                             }
                         }
 
-                        parallel builds
+                        parallel builds.failFast(true)
                     }
                 }
             }
         }
 
         stage('Docker Build & push') {
-            // TODO: Check is dockerfile is exists
-            // TODO: Check if /target directory is exists
-            // TODO: Check if jar is exists
-
             steps {
                 script {
                     sh "./create-dockerfiles.sh"
