@@ -3,9 +3,7 @@ pipeline {
 
     environment {
         // Define any environment variables here
-        BUILD_ALL = 'false'
-        DOCKERHUB = credentials('dockerhub') // Replace with your actual credentials ID
-        TAG = "LATEST"
+        // DOCKERHUB = credentials('dockerhub') // Replace with your actual credentials ID
         FAILED_STAGES = ''
     }
 
@@ -23,32 +21,21 @@ pipeline {
             steps {
                 script {
                     echo 'Detecting changes in the repository...'
-                    def changedFiles = sh(script: "git diff --name-only origin/main HEAD", returnStdout: true).trim().split('\n').findAll { it.trim() }
-                    
-                    def changedServices=changedFiles
-                        .findAll {it.startsWith("spring-petclinic-") }
-                        .collect {it.split('/')[0] }
-                        .unique()
-                    
-                    if (changedServices.isEmpty()) {
-                        echo "No services changed in the last commit."
-                        BUILD_ALL = 'true'
-                    } else {
-                        echo "Changed services: ${changedServices.join(', ')}"
-                        def commitId = sh(script: "git rev-parse --short HEAD", returnStdout: true).trim()
-                        TAG = commitId
-                        env.CHANGED_SERVICES = changedServices.join(',')
-                    }
-
+                    def base = sh(script: "git merge-base origin/main HEAD", returnStdout:true).trim()
+                    env.TAG = sh(script: "git rev-parse --short HEAD", returnStdout: true).trim()
+                    env.CHANGED_SERVICES = sh(script: "git diff --name-only ${base} HEAD | grep '^spring-petclinic-' | cut -d/ -f1 | sort -u | paste -sd , -", returnStdout: true).trim()
+                    echo "Changed services: ${env.CHANGED_SERVICES}"
                 }
             }
         }
+
+        // stage ('Build ')
 
         stage('Build & Test') {
             // Build the project
             steps {
                 script {
-                    if (BUILD_ALL == 'true') {
+                    if (evn.changedServices.isEmpty()) {
                         echo 'Building all services...'
                         sh 'mvn clean package -DskipTests'
                     } else {
@@ -79,7 +66,13 @@ pipeline {
                     sh "./create-dockerfiles.sh"
 
                     echo "Logging into Docker Hub..."
-                    sh 'echo $DOCKERHUB_PSW docker login -u $DOCKERHUB_USR --password-stdin'
+                    withCredentials([usernamePassword(
+                            credentialsId: 'dockerhub', 
+                            usernameVariable: 'DOCKERHUB_USR', 
+                            passwordVariable: 'DOCKERHUB_PSW')
+                            ]) {
+                        sh 'echo $DOCKERHUB_PSW | docker login -u $DOCKERHUB_USR --password-stdin'
+                    }
 
                     echo 'Building Docker images for changed services...'
                     def services = env.CHANGED_SERVICES.split(',')
@@ -93,14 +86,12 @@ pipeline {
                                 if (!fileExists("Dockerfile")) {
                                     error "Dockerfile not found in ${service} directory."
                                 }
-
                                 echo "Dockerfile exists for service: ${service}"
 
                                 echo "Checking for target directory in ${service}..."
-                                if (!fileExists("target")) {
+                                if (!fileExists("target") || !isDirectory("target")) {
                                     error "Target directory not found in ${service} directory."
                                 }
-
                                 echo "Target directory exists for service: ${service}"
 
                                 echo "Checking for JAR file in target directory of ${service}..."
@@ -118,17 +109,21 @@ pipeline {
                                 echo ""
 
                                 echo "Building Docker image for service: ${service} with tag ${TAG}"
-                                sh "docker build -t ${DOCKERHUB_USR}/${service}:${TAG} ."
+                                sh "docker build -t ${DOCKERHUB_USR}/${service}:${TAG} -t ${DOCKERHUB_USR}/${service}:latest ."
 
-                                echo "Pushing Docker image for service: ${service} with tag ${TAG}"
-                                sh "docker push ${DOCKERHUB_USR}/${service}:${TAG}"
+                                lock (resource: "docker-${service}", inversePrecedence: true) {
+                                    // Ensure that the Docker image is pushed only once
+                                    echo "Pushing Docker image for service: ${service} to Docker Hub"
+                                    sh "docker push ${DOCKERHUB_USR}/${service}:${TAG}"
+                                    sh "docker push ${DOCKERHUB_USR}/${service}:latest"
+                                }
 
                                 echo "Docker image for service ${service} pushed successfully."
                             }
                         }
                     }
 
-                    parallel dockerBuilds
+                    parallel dockerBuilds.failFast(true)
                 }
             }
         }
@@ -151,6 +146,7 @@ pipeline {
         cleanup {
             echo 'Cleaning up...'
             // Perform any necessary cleanup actions
+            sh "docker image prune -af"
             cleanWs()
         }
     }
