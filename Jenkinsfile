@@ -86,7 +86,7 @@ pipeline {
                                 echo "Dockerfile exists for service: ${service}"
 
                                 echo "Checking for target directory in ${service}..."
-                                if (!fileExists("target") || !isDirectory("target")) {
+                                if (!fileExists("target")) {
                                     error "Target directory not found in ${service} directory."
                                 }
                                 echo "Target directory exists for service: ${service}"
