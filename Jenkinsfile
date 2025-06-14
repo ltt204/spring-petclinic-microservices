@@ -5,7 +5,7 @@ pipeline {
         // Define any environment variables here
     }
 
-    stage {
+    stages {
         stage('Checkout') {
             // Checkout the code from the repository
             steps {
