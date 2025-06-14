@@ -4,7 +4,7 @@ pipeline {
     environment {
         // Define any environment variables here
         BUILD_ALL = 'false'
-        CREDENTIALS = credentials('dockerhub') // Replace with your actual credentials ID
+        DOCKERHUB = credentials('dockerhub') // Replace with your actual credentials ID
         TAG = "LATEST"
         FAILED_STAGES = ''
     }
