@@ -67,7 +67,9 @@ pipeline {
                             credentialsId: 'dockerhub', 
                             usernameVariable: 'DOCKERHUB_USR', 
                             passwordVariable: 'DOCKERHUB_PSW')
-                            ]) {
+                    ]) {
+                        env.DOCKERHUB_USR = "${DOCKERHUB_USR}"
+                        
                         sh 'echo $DOCKERHUB_PSW | docker login -u $DOCKERHUB_USR --password-stdin'
 
                         echo 'Building Docker images for changed services...'
@@ -95,7 +97,6 @@ pipeline {
                                             script: 'ls target/*.jar 2>/dev/null | wc -l',
                                             returnStdout: true
                                         ).trim() != '0'
-                                        
                                     if (!jarExists) {
                                         error "JAR file not found in target directory of ${service}."
                                     }
@@ -105,13 +106,13 @@ pipeline {
                                     echo ""
 
                                     echo "Building Docker image for service: ${service} with tag ${TAG}"
-                                    sh "docker build -t ${DOCKERHUB_USR}/${service}:${TAG} -t ${DOCKERHUB_USR}/${service}:latest ."
+                                    sh "docker build -t ${env.DOCKERHUB_USR}/${service}:${TAG} -t ${env.DOCKERHUB_USR}/${service}:latest ."
 
                                     lock (resource: "docker-${service}", inversePrecedence: true) {
                                         // Ensure that the Docker image is pushed only once
                                         echo "Pushing Docker image for service: ${service} to Docker Hub"
-                                        sh "docker push ${DOCKERHUB_USR}/${service}:${TAG}"
-                                        sh "docker push ${DOCKERHUB_USR}/${service}:latest"
+                                        sh "docker push ${env.DOCKERHUB_USR}/${service}:${TAG}"
+                                        sh "docker push ${env.DOCKERHUB_USR}/${service}:latest"
                                     }
 
                                     echo "Docker image for service ${service} pushed successfully."
