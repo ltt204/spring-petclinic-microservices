@@ -42,7 +42,7 @@ pipeline {
             // Build the project
             steps {
                 script {
-                    if (env.BUILD_ALL == 'true') {
+                    if (BUILD_ALL == 'true') {
                         echo 'Building all services...'
                         sh './mvnw clean package -DskipTests'
                     } else {
