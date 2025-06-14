@@ -7,11 +7,6 @@ pipeline {
         FAILED_STAGES = ''
     }
 
-    options {
-        parallelAlwaysFailFast() // Fail fast if any parallel stage fails
-        timestamps() // Add timestamps to the console output
-    }
-
     stages {
         stage('Checkout') {
             // Checkout the code from the repository
@@ -54,7 +49,8 @@ pipeline {
                                 sh "cd ${service} && mvn -B -T1C clean package -DskipTests"
                             }
                         }
-
+                        
+                        builds.failFast = true // Ensure that the build fails fast if any service fails
                         parallel builds
                     }
                 }
@@ -124,6 +120,7 @@ pipeline {
                         }
                     }
 
+                    dockerBuilds.failFast = true // Ensure that the build fails fast if any service fails
                     parallel dockerBuilds
                 }
             }
