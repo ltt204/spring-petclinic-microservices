@@ -1,9 +1,10 @@
 pipeline {
     agent any
 
-    // environment {
-    //     // Define any environment variables here
-    // }
+    environment {
+        // Define any environment variables here
+        BUILD_ALL = 'false'
+    }
 
     stages {
         stage('Checkout') {
@@ -28,7 +29,7 @@ pipeline {
                     
                    if (changedServices.isEmpty()) {
                         error "No services changed in the last commit."
-                        currentBuild.result = 'TRUE'
+                        BUILD_ALL = 'true'
                     } else {
                         echo "Changed services: ${changedServices.join(', ')}"
                         env.CHANGED_SERVICES = changedServices.join(',')
@@ -41,17 +42,23 @@ pipeline {
             // Build the project
             steps {
                 script {
-                    def services = env.CHANGED_SERVICES.split(',')
-                    def builds = [:]
+                    if (env.BUILD_ALL == 'true') {
+                        echo 'Building all services...'
+                        sh './mvnw clean package -DskipTests'
+                    } else {
+                        echo 'Building only changed services...'
+                        def services = env.CHANGED_SERVICES.split(',')
+                        def builds = [:]
 
-                    services.each { service ->
-                        builds[service] = {
-                            echo "Building service: ${service}"
-                            sh "cd ${service} && ./mvnw clean package -DskipTests"
+                        services.each { service ->
+                            builds[service] = {
+                                echo "Building service: ${service}"
+                                sh "cd ${service} && ./mvnw clean package -DskipTests"
+                            }
                         }
-                    }
 
-                    parallel builds
+                        parallel builds
+                    }
                 }
             }
         }
