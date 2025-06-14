@@ -4,6 +4,8 @@ pipeline {
     environment {
         // Define any environment variables here
         BUILD_ALL = 'false'
+        CREDENTIALS = credentials('dockerhub') // Replace with your actual credentials ID
+        TAG = "LATEST"
     }
 
     stages {
@@ -32,8 +34,11 @@ pipeline {
                         BUILD_ALL = 'true'
                     } else {
                         echo "Changed services: ${changedServices.join(', ')}"
+                        def commitId = sh(script: "git rev-parse --short HEAD", returnStdout: true).trim()
+                        TAG = commitId
                         env.CHANGED_SERVICES = changedServices.join(',')
                     }
+
                 }
             }
         }
@@ -59,6 +64,33 @@ pipeline {
 
                         parallel builds
                     }
+                }
+            }
+        }
+
+        stage('Docker Build & push') {
+            steps {
+                script {
+                    echo "Logging into Docker Hub..."
+                    withCredentials([usernamePassword(credentialsId: env.CREDENTIALS, usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
+                        sh "echo ${DOCKER_PASSWORD} | docker login -u ${DOCKER_USERNAME} --password-stdin"
+                    }
+
+                    echo 'Building Docker images for changed services...'
+                    def services = env.CHANGED_SERVICES.split(',')
+                    def dockerBuilds = [:]
+
+                    services.each { service ->
+                        dockerBuilds[service] = {
+                            echo "Building Docker image for service: ${service} with tag ${TAG}"
+                            sh "cd ${service} && docker build -t ${DOCKER_USERNAME}/${service}:${TAG} ."
+                            echo "Pushing Docker image for service: ${service} with tag ${TAG}"
+                            sh "docker push ${DOCKER_USERNAME}/${service}:${TAG}"
+                            echo "Docker image for service ${service} pushed successfully."
+                        }
+                    }
+
+                    parallel dockerBuilds
                 }
             }
         }
