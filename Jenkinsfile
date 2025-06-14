@@ -94,13 +94,23 @@ pipeline {
 
                                 echo "Dockerfile exists for service: ${service}"
 
+                                echo "Checking for target directory in ${service}..."
                                 if (!fileExists("target")) {
                                     error "Target directory not found in ${service} directory."
                                 }
 
-                                if (!fileExists("target/*.jar")) {
+                                echo "Target directory exists for service: ${service}"
+
+                                echo "Checking for JAR file in target directory of ${service}..."
+                                def jarExists = sh(
+                                        script: 'ls target/*.jar 2>/dev/null | wc -l',
+                                        returnStdout: true
+                                    ).trim() != '0'
+                                    
+                                if (!jarExists) {
                                     error "JAR file not found in target directory of ${service}."
                                 }
+                                echo "JAR file exists in target directory of ${service} directory."
 
                                 echo "Target directory and JAR file exist for service: ${service}. Proceeding with Docker build."
                                 echo ""
@@ -113,7 +123,7 @@ pipeline {
 
                                 echo "Docker image for service ${service} pushed successfully."
                             }
-                            }
+                        }
                     }
 
                     parallel dockerBuilds
