@@ -27,8 +27,8 @@ pipeline {
                         .collect {it.split('/')[0] }
                         .unique()
                     
-                   if (changedServices.isEmpty()) {
-                        error "No services changed in the last commit."
+                    if (changedServices.isEmpty()) {
+                        echo "No services changed in the last commit."
                         BUILD_ALL = 'true'
                     } else {
                         echo "Changed services: ${changedServices.join(', ')}"
