@@ -69,59 +69,59 @@ pipeline {
                             passwordVariable: 'DOCKERHUB_PSW')
                             ]) {
                         sh 'echo $DOCKERHUB_PSW | docker login -u $DOCKERHUB_USR --password-stdin'
-                    }
 
-                    echo 'Building Docker images for changed services...'
-                    def services = env.CHANGED_SERVICES.split(',')
-                    def dockerBuilds = [:]
+                        echo 'Building Docker images for changed services...'
+                        def services = env.CHANGED_SERVICES.split(',')
+                        def dockerBuilds = [:]
 
-                    services.each { service ->
-                        dockerBuilds[service] = {
-                            dir (service) {
-                                echo "Building Docker image for service: ${service} with tag ${TAG}"
+                        services.each { service ->
+                            dockerBuilds[service] = {
+                                dir (service) {
+                                    echo "Building Docker image for service: ${service} with tag ${TAG}"
 
-                                if (!fileExists("Dockerfile")) {
-                                    error "Dockerfile not found in ${service} directory."
+                                    if (!fileExists("Dockerfile")) {
+                                        error "Dockerfile not found in ${service} directory."
+                                    }
+                                    echo "Dockerfile exists for service: ${service}"
+
+                                    echo "Checking for target directory in ${service}..."
+                                    if (!fileExists("target")) {
+                                        error "Target directory not found in ${service} directory."
+                                    }
+                                    echo "Target directory exists for service: ${service}"
+
+                                    echo "Checking for JAR file in target directory of ${service}..."
+                                    def jarExists = sh(
+                                            script: 'ls target/*.jar 2>/dev/null | wc -l',
+                                            returnStdout: true
+                                        ).trim() != '0'
+                                        
+                                    if (!jarExists) {
+                                        error "JAR file not found in target directory of ${service}."
+                                    }
+                                    echo "JAR file exists in target directory of ${service} directory."
+
+                                    echo "Target directory and JAR file exist for service: ${service}. Proceeding with Docker build."
+                                    echo ""
+
+                                    echo "Building Docker image for service: ${service} with tag ${TAG}"
+                                    sh "docker build -t ${DOCKERHUB_USR}/${service}:${TAG} -t ${DOCKERHUB_USR}/${service}:latest ."
+
+                                    lock (resource: "docker-${service}", inversePrecedence: true) {
+                                        // Ensure that the Docker image is pushed only once
+                                        echo "Pushing Docker image for service: ${service} to Docker Hub"
+                                        sh "docker push ${DOCKERHUB_USR}/${service}:${TAG}"
+                                        sh "docker push ${DOCKERHUB_USR}/${service}:latest"
+                                    }
+
+                                    echo "Docker image for service ${service} pushed successfully."
                                 }
-                                echo "Dockerfile exists for service: ${service}"
-
-                                echo "Checking for target directory in ${service}..."
-                                if (!fileExists("target")) {
-                                    error "Target directory not found in ${service} directory."
-                                }
-                                echo "Target directory exists for service: ${service}"
-
-                                echo "Checking for JAR file in target directory of ${service}..."
-                                def jarExists = sh(
-                                        script: 'ls target/*.jar 2>/dev/null | wc -l',
-                                        returnStdout: true
-                                    ).trim() != '0'
-                                    
-                                if (!jarExists) {
-                                    error "JAR file not found in target directory of ${service}."
-                                }
-                                echo "JAR file exists in target directory of ${service} directory."
-
-                                echo "Target directory and JAR file exist for service: ${service}. Proceeding with Docker build."
-                                echo ""
-
-                                echo "Building Docker image for service: ${service} with tag ${TAG}"
-                                sh "docker build -t ${DOCKERHUB_USR}/${service}:${TAG} -t ${DOCKERHUB_USR}/${service}:latest ."
-
-                                lock (resource: "docker-${service}", inversePrecedence: true) {
-                                    // Ensure that the Docker image is pushed only once
-                                    echo "Pushing Docker image for service: ${service} to Docker Hub"
-                                    sh "docker push ${DOCKERHUB_USR}/${service}:${TAG}"
-                                    sh "docker push ${DOCKERHUB_USR}/${service}:latest"
-                                }
-
-                                echo "Docker image for service ${service} pushed successfully."
                             }
                         }
-                    }
 
-                    dockerBuilds.failFast = true // Ensure that the build fails fast if any service fails
-                    parallel dockerBuilds
+                        dockerBuilds.failFast = true // Ensure that the build fails fast if any service fails
+                        parallel dockerBuilds
+                    }
                 }
             }
         }
