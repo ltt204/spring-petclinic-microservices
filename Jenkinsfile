@@ -53,7 +53,7 @@ pipeline {
                         services.each { service ->
                             builds[service] = {
                                 echo "Building service: ${service}"
-                                sh "cd ${service} && ./mvnw clean package -DskipTests"
+                                sh "cd ${service} && ../mvnw clean package -DskipTests"
                             }
                         }
 
