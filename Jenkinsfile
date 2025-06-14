@@ -35,7 +35,7 @@ pipeline {
             // Build the project
             steps {
                 script {
-                    if (env.changedServices.isEmpty()) {
+                    if (env.CHANGED_SERVICES.isEmpty()) {
                         echo 'Building all services...'
                         sh 'mvn clean package -DskipTests'
                     } else {
