@@ -108,12 +108,11 @@ pipeline {
                                     echo "Building Docker image for service: ${service} with tag ${TAG}"
                                     sh "docker build -t ${env.DOCKERHUB_USR}/${service}:${TAG} -t ${env.DOCKERHUB_USR}/${service}:latest ."
 
-                                    lock (resource: "docker-${service}", inversePrecedence: true) {
-                                        // Ensure that the Docker image is pushed only once
-                                        echo "Pushing Docker image for service: ${service} to Docker Hub"
-                                        sh "docker push ${env.DOCKERHUB_USR}/${service}:${TAG}"
-                                        sh "docker push ${env.DOCKERHUB_USR}/${service}:latest"
-                                    }
+                                    // lock(resource: 'staging-server', inversePrecedence: true) {
+                                    echo "Pushing Docker image for service: ${service} to Docker Hub"
+                                    sh "docker push ${env.DOCKERHUB_USR}/${service}:${TAG}"
+                                    sh "docker push ${env.DOCKERHUB_USR}/${service}:latest"
+                                    // }
 
                                     echo "Docker image for service ${service} pushed successfully."
                                 }
