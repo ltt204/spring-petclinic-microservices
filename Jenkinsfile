@@ -20,7 +20,7 @@ pipeline {
             steps {
                 script {
                     echo 'Detecting changes in the repository...'
-                    def changedFiles = sh(script: "git diff --name-only origin/main HEAD~1", returnStdout: true).trim().split('\n').findAll { it.trim() }
+                    def changedFiles = sh(script: "git diff --name-only origin/main HEAD", returnStdout: true).trim().split('\n').findAll { it.trim() }
                     
                     def changedServices=changedFiles
                         .findAll {it.startsWith("spring-petclinic-") }
