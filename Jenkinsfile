@@ -23,10 +23,10 @@ pipeline {
                     
                     def changedServices=changedFiles
                         .findAll {it.startsWith("spring-petclinic-") }
-                        .collect { it.split('/')[0] }
+                        .collect {it.split('/')[0] }
                         .unique()
                     
-                   if (services.isEmpty()) {
+                   if (changedServices.isEmpty()) {
                         error "No services changed in the last commit."
                         currentBuild.result = 'TRUE'
                     } else {
