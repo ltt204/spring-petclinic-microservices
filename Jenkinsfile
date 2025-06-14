@@ -86,7 +86,13 @@ pipeline {
                     services.each { service ->
                         dockerBuilds[service] = {
                             echo "Building Docker image for service: ${service} with tag ${TAG}"
-                            sh "cd ${service} && docker build -t ${DOCKERHUB_USR}/${service}:${TAG} ."
+                            sh "cd ${service}"
+
+                            if (!fileExists("Dockerfile")) {
+                                error "Dockerfile not found in ${service} directory."
+                            }
+
+                            sh "docker build -t ${DOCKERHUB_USR}/${service}:${TAG} ."
                             echo "Pushing Docker image for service: ${service} with tag ${TAG}"
                             sh "docker push ${DOCKERHUB_USR}/${service}:${TAG}"
                             echo "Docker image for service ${service} pushed successfully."
