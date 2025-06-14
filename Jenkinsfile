@@ -77,7 +77,7 @@ pipeline {
                         credentialsId: 'dockerhub', 
                         usernameVariable: 'DOCKERHUB_USR', 
                         passwordVariable: 'DOCKERHUB_PWD')]) {
-                        sh "echo ${DOCKERHUB_PWD} | docker login -u ${DOCKERHUB_USR} --password-stdin"
+                        sh "docker login -u ${DOCKERHUB_USR} --password-stdin"
                     }
 
                     echo 'Building Docker images for changed services...'
