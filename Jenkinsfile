@@ -73,7 +73,7 @@ pipeline {
             steps {
                 script {
                     echo "Logging into Docker Hub..."
-                    sh "echo $DOCKERHUB_PWD docker login -u $DOCKERHUB_USR --password-stdin"
+                    sh 'echo $DOCKERHUB_PSW docker login -u $DOCKERHUB_USR --password-stdin'
 
                     echo 'Building Docker images for changed services...'
                     def services = env.CHANGED_SERVICES.split(',')
