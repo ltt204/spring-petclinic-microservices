@@ -118,7 +118,7 @@ pipeline {
                                 echo ""
 
                                 echo "Building Docker image for service: ${service} with tag ${TAG}"
-                                sh "docker build -t ${DOCKERHUB_USR}/${service}:${TAG} ."
+                                sh "../mvnw clean install -Dmaven.test.skip -P buildDocker -Ddocker.image.prefix=${DOCKERHUB} -Dcontainer.build.extraarg=\"--push\" -Dcontainer.platform=\"linux/amd64\""
 
                                 echo "Pushing Docker image for service: ${service} with tag ${TAG}"
                                 sh "docker push ${DOCKERHUB_USR}/${service}:${TAG}"
