@@ -7,6 +7,11 @@ pipeline {
         FAILED_STAGES = ''
     }
 
+    options {
+        parallelAlwaysFailFast() // Fail fast if any parallel stage fails
+        timestamps() // Add timestamps to the console output
+    }
+
     stages {
         stage('Checkout') {
             // Checkout the code from the repository
@@ -35,7 +40,7 @@ pipeline {
             // Build the project
             steps {
                 script {
-                    if (env.CHANGED_SERVICES.isEmpty()) {
+                    if (env.changedServices.isEmpty()) {
                         echo 'Building all services...'
                         sh 'mvn clean package -DskipTests'
                     } else {
@@ -50,7 +55,7 @@ pipeline {
                             }
                         }
 
-                        parallel builds.failFast(true)
+                        parallel builds
                     }
                 }
             }
@@ -119,7 +124,7 @@ pipeline {
                         }
                     }
 
-                    parallel dockerBuilds.failFast(true)
+                    parallel dockerBuilds
                 }
             }
         }
