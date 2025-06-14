@@ -76,6 +76,8 @@ pipeline {
 
             steps {
                 script {
+                    sh "./create-dockerfiles.sh"
+
                     echo "Logging into Docker Hub..."
                     sh 'echo $DOCKERHUB_PSW docker login -u $DOCKERHUB_USR --password-stdin'
 
