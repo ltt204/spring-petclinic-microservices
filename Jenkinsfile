@@ -6,6 +6,7 @@ pipeline {
         BUILD_ALL = 'false'
         CREDENTIALS = credentials('dockerhub') // Replace with your actual credentials ID
         TAG = "LATEST"
+        FAILED_STAGES = ''
     }
 
     stages {
@@ -72,8 +73,11 @@ pipeline {
             steps {
                 script {
                     echo "Logging into Docker Hub..."
-                    withCredentials([usernamePassword(credentialsId: env.CREDENTIALS, usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
-                        sh "echo ${DOCKER_PASSWORD} | docker login -u ${DOCKER_USERNAME} --password-stdin"
+                    withCredentials([usernamePassword(
+                        credentialsId: 'dockerhub', 
+                        usernameVariable: 'DOCKERHUB_USR', 
+                        passwordVariable: 'DOCKERHUB_PWD')]) {
+                        sh "echo ${DOCKERHUB_PWD} | docker login -u ${DOCKERHUB_USR} --password-stdin"
                     }
 
                     echo 'Building Docker images for changed services...'
@@ -83,9 +87,9 @@ pipeline {
                     services.each { service ->
                         dockerBuilds[service] = {
                             echo "Building Docker image for service: ${service} with tag ${TAG}"
-                            sh "cd ${service} && docker build -t ${DOCKER_USERNAME}/${service}:${TAG} ."
+                            sh "cd ${service} && docker build -t ${DOCKERHUB_USR}/${service}:${TAG} ."
                             echo "Pushing Docker image for service: ${service} with tag ${TAG}"
-                            sh "docker push ${DOCKER_USERNAME}/${service}:${TAG}"
+                            sh "docker push ${DOCKERHUB_USR}/${service}:${TAG}"
                             echo "Docker image for service ${service} pushed successfully."
                         }
                     }
