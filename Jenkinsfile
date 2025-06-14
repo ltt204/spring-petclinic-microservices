@@ -70,6 +70,10 @@ pipeline {
         }
 
         stage('Docker Build & push') {
+            // TODO: Check is dockerfile is exists
+            // TODO: Check if /target directory is exists
+            // TODO: Check if jar is exists
+
             steps {
                 script {
                     echo "Logging into Docker Hub..."
@@ -82,9 +86,8 @@ pipeline {
                     services.each { service ->
                         dockerBuilds[service] = {
                             echo "Building Docker image for service: ${service} with tag ${TAG}"
-                            // Use Maven's buildDocker profile which handles all details
-                            sh "cd ${service} && ../mvnw clean install -DskipTests -P buildDocker -Ddocker.image.tag=${TAG} -Ddocker.image.prefix=${DOCKERHUB_USR}"
-                            // Push the image
+                            sh "cd ${service} && docker build -t ${DOCKERHUB_USR}/${service}:${TAG} ."
+                            echo "Pushing Docker image for service: ${service} with tag ${TAG}"
                             sh "docker push ${DOCKERHUB_USR}/${service}:${TAG}"
                             echo "Docker image for service ${service} pushed successfully."
                         }
