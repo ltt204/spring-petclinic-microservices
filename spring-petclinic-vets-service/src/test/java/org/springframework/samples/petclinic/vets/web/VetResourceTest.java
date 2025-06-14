@@ -59,4 +59,9 @@ class VetResourceTest {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$[0].id").value(1));
     }
+
+    @Test 
+    void thisTestForJenkins() throws Exception {
+        System.out.println("This is a test for Jenkins to ensure the pipeline is working correctly.");
+    }   
 }
