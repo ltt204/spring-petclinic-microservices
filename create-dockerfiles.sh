@@ -20,6 +20,8 @@ ENV SPRING_PROFILES_ACTIVE=docker
 ENTRYPOINT ["java", "-jar", "admin-server.jar"]
 DOCKER_EOF
 
+chmod +x spring-petclinic-admin-server/Dockerfile
+
 # API Gateway
 mkdir -p spring-petclinic-api-gateway
 cat > spring-petclinic-api-gateway/Dockerfile << 'DOCKER_EOF'
@@ -39,6 +41,7 @@ ENTRYPOINT ["java", "-jar", "api-gateway.jar"]
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
     CMD curl -f http://localhost:8080/actuator/health || exit 1
 DOCKER_EOF
+chmod +x spring-petclinic-api-gateway/Dockerfile
 
 # Config Server
 mkdir -p spring-petclinic-config-server
@@ -59,6 +62,7 @@ ENTRYPOINT ["java", "-jar", "config-server.jar"]
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
     CMD curl -f http://localhost:8888/actuator/health || exit 1
 DOCKER_EOF
+chmod +x spring-petclinic-config-server/Dockerfile
 
 # Customers Service
 mkdir -p spring-petclinic-customers-service
@@ -75,6 +79,7 @@ ENV SPRING_PROFILES_ACTIVE=docker
 
 ENTRYPOINT ["java", "-jar", "customers-service.jar"]
 DOCKER_EOF
+chmod +x spring-petclinic-customers-service/Dockerfile
 
 # Discovery Server
 mkdir -p spring-petclinic-discovery-server
@@ -95,6 +100,7 @@ ENTRYPOINT ["java", "-jar", "discovery-server.jar"]
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
     CMD curl -f http://localhost:8761/actuator/health || exit 1
 DOCKER_EOF
+chmod +x spring-petclinic-discovery-server/Dockerfile
 
 # GenAI Service
 mkdir -p spring-petclinic-genai-service
@@ -111,6 +117,7 @@ ENV SPRING_PROFILES_ACTIVE=docker
 
 ENTRYPOINT ["java", "-jar", "genai-service.jar"]
 DOCKER_EOF
+chmod +x spring-petclinic-genai-service/Dockerfile
 
 # Vets Service
 mkdir -p spring-petclinic-vets-service
@@ -127,6 +134,7 @@ ENV SPRING_PROFILES_ACTIVE=docker
 
 ENTRYPOINT ["java", "-jar", "vets-service.jar"]
 DOCKER_EOF
+chmod +x spring-petclinic-vets-service/Dockerfile
 
 # Visits Service
 mkdir -p spring-petclinic-visits-service
@@ -143,6 +151,7 @@ ENV SPRING_PROFILES_ACTIVE=docker
 
 ENTRYPOINT ["java", "-jar", "visits-service.jar"]
 DOCKER_EOF
+chmod +x spring-petclinic-visits-service/Dockerfile
 
 echo "✅ All Dockerfiles created successfully!"
 echo ""
