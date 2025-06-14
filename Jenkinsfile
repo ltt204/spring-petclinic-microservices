@@ -50,7 +50,7 @@ pipeline {
                 script {
                     if (BUILD_ALL == 'true') {
                         echo 'Building all services...'
-                        sh './mvnw clean package -DskipTests'
+                        sh 'mvn clean package -DskipTests'
                     } else {
                         echo 'Building only changed services...'
                         def services = env.CHANGED_SERVICES.split(',')
@@ -59,7 +59,7 @@ pipeline {
                         services.each { service ->
                             builds[service] = {
                                 echo "Building service: ${service}"
-                                sh "cd ${service} && ../mvnw clean package -DskipTests"
+                                sh "cd ${service} && mvn clean package -DskipTests"
                             }
                         }
 
