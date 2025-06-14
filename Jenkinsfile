@@ -92,9 +92,25 @@ pipeline {
                                 error "Dockerfile not found in ${service} directory."
                             }
 
+                            echo "Dockerfile exists for service: ${service}"
+
+                            if (!fileExists("target")) {
+                                error "Target directory not found in ${service} directory."
+                            }
+
+                            if (!fileExists("target/*.jar")) {
+                                error "JAR file not found in target directory of ${service}."
+                            }
+
+                            echo "Target directory and JAR file exist for service: ${service}. Proceeding with Docker build."
+                            echo ""
+                            
+                            echo "Building Docker image for service: ${service} with tag ${TAG}"
                             sh "docker build -t ${DOCKERHUB_USR}/${service}:${TAG} ."
+
                             echo "Pushing Docker image for service: ${service} with tag ${TAG}"
                             sh "docker push ${DOCKERHUB_USR}/${service}:${TAG}"
+
                             echo "Docker image for service ${service} pushed successfully."
                         }
                     }
