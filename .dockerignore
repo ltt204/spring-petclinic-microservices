@@ -11,3 +11,7 @@ build/
 application*.properties
 application*.yml
 application*.yaml
+
+# Exclude Docker-related files
+!Dockerfile
+!docker-compose.yml
