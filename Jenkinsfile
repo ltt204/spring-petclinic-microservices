@@ -60,6 +60,11 @@ pipeline {
         stage('Docker Build & push') {
             steps {
                 script {
+                    if (env.CHANGED_SERVICES.isEmpty()) {
+                        echo 'No services changed, skipping Docker build and push.'
+                        return
+                    }
+
                     sh "./create-dockerfiles.sh"
 
                     echo "Logging into Docker Hub..."
