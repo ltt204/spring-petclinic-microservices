@@ -21,7 +21,27 @@ pipeline {
             steps {
                 script {
                     echo 'Detecting changes in the repository...'
+
+                    def previousSuccessfulBuildCommit = null
+
+                    if (env.previousSuccessfulBuild) {
+                        echo "Previous successful build found: ${env.previousSuccessfulBuild}"
+                        sh "git fetch origin main"
+
+                        previousSuccessfulBuildCommit = env.previousSuccessfulBuild.envVars['GIT_COMMIT'] ?: null
+                    } else {
+                        echo 'No previous successful build found, checking against origin/main...'
+                    }
+
                     def base = sh(script: "git merge-base origin/main HEAD", returnStdout:true).trim()
+
+                    if (previousSuccessfulBuildCommit) {
+                        echo "Using previous successful build commit: ${previousSuccessfulBuildCommit}"
+                        base = previousSuccessfulBuildCommit
+                    } else {
+                        echo "Using base commit: ${base}"
+                    }
+
                     env.TAG = sh(script: "git rev-parse --short HEAD", returnStdout: true).trim()
                     env.CHANGED_SERVICES = sh(script: "git diff --name-only ${base} HEAD | grep '^spring-petclinic-' | cut -d/ -f1 | sort -u | paste -sd , -", returnStdout: true).trim()
                     echo "Changed services: ${env.CHANGED_SERVICES}"
