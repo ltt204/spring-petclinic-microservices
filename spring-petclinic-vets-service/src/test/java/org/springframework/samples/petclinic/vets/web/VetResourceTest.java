@@ -69,4 +69,9 @@ class VetResourceTest {
     void thisTestForJenkins_second() throws Exception {
         System.out.println("This is a second test for Jenkins to ensure the pipeline is working correctly.");
     }   
+
+    @Test
+    void thisTestForJenkins_third() throws Exception {
+        System.out.println("This is a third test for Jenkins to ensure the pipeline is working correctly.");
+    }
 }
